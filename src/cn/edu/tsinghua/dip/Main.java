@@ -8,7 +8,7 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        String imageName = "Ex_img/ImageProcessingDemo";
+        String imageName = "Ex_img/dft1";
         String imageFileExtension = ".png";
         BufferedImage srcimg = ImageIO.read(new File(imageName + imageFileExtension));
         BufferedImage destimg = DFT(srcimg);
@@ -36,12 +36,15 @@ public class Main {
             for (int j = 0; j < n; j++) {
                 if (i < w && j < h) {
                     pixel = img.getRGB(i, j);
+                    int red = pixel & 0x00ff0000 >> 16;
+                    int green = (pixel & 0x0000ff00) >> 8; // 250 = 0xfa
+                    int blue = (pixel & 0x000000ff); // 255 = 0xff
+                    int gray = (red + green + blue) / 3;
                     if ((i + j) % 2 == 0) {
-                        newred = pixel & 0x00ff0000 >> 16;
                     } else {
-                        newred = -(pixel & 0x00ff0000 >> 16);
+                        gray = -gray;
                     }
-                    last[i][j] = newred;
+                    last[i][j] = gray;
                 } else {
                     last[i][j] = 0;
                 }
@@ -99,37 +102,37 @@ public class Main {
         // 构造原始滤波函数
         Complex[][] filter = new Complex[m][n];
         //这个是11X11均值滤波
-//		for (int x = 0; x < m; x++) {
-//			for (int y = 0; y < n; y++) {
-//				if (x < 11 && y < 11) {
-//					if ((x+y)%2==0)
-//						filter[x][y] = new Complex(1/121d, 0); // double 后面赋值数字记得加d！！！！！！！
-//					else
-//						filter[x][y] = new Complex(-1/121d, 0);
-//				}
-//				else {
-//					filter[x][y] = new Complex(0, 0);
-//				}
-//			}
-//		}
+		for (int x = 0; x < m; x++) {
+			for (int y = 0; y < n; y++) {
+				if (x < 11 && y < 11) {
+					if ((x+y)%2==0)
+						filter[x][y] = new Complex(1/121d, 0); // double 后面赋值数字记得加d！！！！！！！
+					else
+						filter[x][y] = new Complex(-1/121d, 0);
+				}
+				else {
+					filter[x][y] = new Complex(0, 0);
+				}
+			}
+		}
 
         //下面这个是拉普拉斯滤波
-        filter[0][0] = new Complex(0, 0);
-        filter[0][1] = new Complex(-1, 0);
-        filter[0][2] = new Complex(0, 0);
-        filter[1][0] = new Complex(-1, 0);
-        filter[1][1] = new Complex(4, 0);
-        filter[1][2] = new Complex(-1, 0);
-        filter[2][0] = new Complex(0, 0);
-        filter[2][1] = new Complex(-1, 0);
-        filter[2][2] = new Complex(0, 0);
-        for (int x = 0; x < m; x++) {
-            for (int y = 0; y < n; y++) {
-                if (x < 3 && y < 3) {/*上面已经写好了*/} else {
-                    filter[x][y] = new Complex(0, 0);
-                }
-            }
-        }
+//        filter[0][0] = new Complex(0, 0);
+//        filter[0][1] = new Complex(-1, 0);
+//        filter[0][2] = new Complex(0, 0);
+//        filter[1][0] = new Complex(-1, 0);
+//        filter[1][1] = new Complex(4, 0);
+//        filter[1][2] = new Complex(-1, 0);
+//        filter[2][0] = new Complex(0, 0);
+//        filter[2][1] = new Complex(-1, 0);
+//        filter[2][2] = new Complex(0, 0);
+//        for (int x = 0; x < m; x++) {
+//            for (int y = 0; y < n; y++) {
+//                if (x < 3 && y < 3) {/*上面已经写好了*/} else {
+//                    filter[x][y] = new Complex(0, 0);
+//                }
+//            }
+//        }
 
         // 傅里叶变换 转换为频率域
         for (int x = 0; x < m; x++) {

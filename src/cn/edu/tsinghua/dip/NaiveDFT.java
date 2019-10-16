@@ -22,24 +22,26 @@ public class NaiveDFT {
         THREAD_POOL_EXECUTOR.shutdown();
     }
 
-    private static BufferedImage DFT(BufferedImage img) throws IOException {
+    public static BufferedImage DFT(BufferedImage img) throws IOException {
         int m = img.getWidth(null);
         int n = img.getHeight(null);
         int[][] last = new int[m][n];
         Complex[][] next = new Complex[m][n];
-        int pixel, newred;
+        int pixel, gray;
 
         BufferedImage destImg;
         //  乘以（-1）^(x+y)
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 pixel = img.getRGB(i, j);
-                if ((i + j) % 2 == 0) {
-                    newred = pixel & 0x00ff0000 >> 16;
-                } else {
-                    newred = -(pixel & 0x00ff0000 >> 16);
+                int red = pixel & 0x00ff0000 >> 16;
+                int green = (pixel & 0x0000ff00) >> 8;
+                int blue = (pixel & 0x000000ff);
+                gray = (red + green + blue) / 3;
+                if ((i + j) % 2 != 0) {
+                    gray = -gray;
                 }
-                last[i][j] = newred;
+                last[i][j] = gray;
             }
         }
 
@@ -148,7 +150,7 @@ public class NaiveDFT {
         return c;
     }
 
-    private static Complex IDFT(int[][] f, int u, int v) {
+    public static Complex IDFT(int[][] f, int u, int v) {
         int M = f.length;
         int N = f[0].length;
         double u_M = (double) u / (double) M;
