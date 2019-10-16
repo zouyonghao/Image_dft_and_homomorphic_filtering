@@ -8,7 +8,7 @@ import java.io.IOException;
 public class HomomorphicFilter {
 
     public static void main(String[] args) throws IOException {
-        String imageName = "Ex_img/hom2";
+        String imageName = "Ex_img/ImageProcessingDemo";
         String imageFileExtension = ".png";
         BufferedImage srcimg = ImageIO.read(new File(imageName + imageFileExtension));
         BufferedImage destimg = DFT(srcimg);
@@ -21,17 +21,12 @@ public class HomomorphicFilter {
         int w = img.getWidth(null);
         int h = img.getHeight(null);
         int m = get2PowerEdge(w); // 获得2的整数次幂
-//		System.out.println(m);
         int n = get2PowerEdge(h);
-//		System.out.println(n);
         double[][] last = new double[m][n];
         Complex[][] next = new Complex[m][n];
         int pixel, newred, newgreen, newblue, newrgb;
 
         BufferedImage destimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-//----------------------------------------------------------------------
-        //  first: Image Padding and move it to center 填充图像至2的整数次幂并乘以（-1）^(x+y)
-        //  use 2-D array last to store
 
         int[][] alpha = new int[m][n];
         for (int i = 0; i < m; i++) {
@@ -42,7 +37,11 @@ public class HomomorphicFilter {
                     int green = (pixel & 0x0000ff00) >> 8;
                     int blue = (pixel & 0x000000ff);
                     int gray = (red + green + blue) / 3;
+//                    int gray = red;
                     alpha[i][j] = (pixel & 0xff000000) >> 24;
+                    if ((i + j) % 2 != 0) {
+                        gray = -gray;
+                    }
                     last[i][j] = gray;
                 } else {
                     last[i][j] = 0;
@@ -52,25 +51,7 @@ public class HomomorphicFilter {
             }
         }
 
-//----------------------------------------------------------------------
-        // second: Fourier Transform 离散傅里叶变换
-        // u-width v-height x-width y-height
-
-        //------------Normal-DFT-------------
-//			for (int u = 0; u < m; u++){
-//				for (int v = 0; v <n; v++) {
-//					next[u][v] = DFT(last, u, v);
-//					System.out.println("U: "+u+"---v: "+v);
-//				}
-//			}
-//			if (true) { // 生成DFT图片,记得修改图片大小
-//			destimg = showFourierImage(next);
-//			return destimg;
-//		}
-
         // 2. dft
-        //---------------FFT-----------------
-        // 先把所有的行都做一维傅里叶变换，再放回去
         Complex[] temp1 = new Complex[n];
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
@@ -92,89 +73,19 @@ public class HomomorphicFilter {
                 next[i][y] = temp2[i];
             }
         }
-//
-//		if (true) { // 生成DFT图片,记得修改图片大小
-//			destimg = showFourierImage(next);
-//			return destimg;
-//		}
-
-//----------------------------------------------------------------------
-        // third: Generate the frequency filter and filter the image in frequency domain 生成频率域滤波器并滤波
-
-        // 构造原始滤波函数
-//        Complex[][] filter = new Complex[m][n];
-//        //这个是11X11均值滤波
-//        for (int x = 0; x < m; x++) {
-//            for (int y = 0; y < n; y++) {
-//                if (x < 11 && y < 11) {
-//                    if ((x+y)%2==0)
-//                        filter[x][y] = new Complex(1/121d, 0); // double 后面赋值数字记得加d！！！！！！！
-//                    else
-//                        filter[x][y] = new Complex(-1/121d, 0);
-//                }
-//                else {
-//                    filter[x][y] = new Complex(0, 0);
-//                }
-//            }
-//        }
-
-        //下面这个是拉普拉斯滤波
-//        filter[0][0] = new Complex(0, 0);
-//        filter[0][1] = new Complex(-1, 0);
-//        filter[0][2] = new Complex(0, 0);
-//        filter[1][0] = new Complex(-1, 0);
-//        filter[1][1] = new Complex(4, 0);
-//        filter[1][2] = new Complex(-1, 0);
-//        filter[2][0] = new Complex(0, 0);
-//        filter[2][1] = new Complex(-1, 0);
-//        filter[2][2] = new Complex(0, 0);
-//        for (int x = 0; x < m; x++) {
-//            for (int y = 0; y < n; y++) {
-//                if (x < 3 && y < 3) {/*上面已经写好了*/} else {
-//                    filter[x][y] = new Complex(0, 0);
-//                }
-//            }
-//        }
-
-        // 傅里叶变换 转换为频率域
-//        for (int x = 0; x < m; x++) {
-//            for (int y = 0; y < n; y++) {
-//                Complex c = new Complex(filter[x][y].getR(), filter[x][y].getI());
-//                temp1[y] = c;
-//            }
-//            filter[x] = fft(temp1);
-//        }
-//
-//        for (int y = 0; y < n; y++) {
-//            for (int x = 0; x < m; x++) {
-//                Complex c = new Complex(filter[x][y].getR(), filter[x][y].getI());
-////				Complex c = filter[x][y];
-//                temp2[x] = c;
-//            }
-//            temp2 = fft(temp2);
-//            for (int i = 0; i < m; i++) {
-//                filter[i][y] = temp2[i];
-//            }
-//        }
-
-//		if (true) {
-//			destimg = showFourierImage(filter);
-//			return destimg;
-//		}
 
         // 3. h filter
         // homomorphic filter
         // hom1 0.2 1.2 80*80
         // hom2
-        double rL = 1.3;
+        double rL = 0.2;
         double rH = 2;
         double c = 1;
-        int D0_2 = 80 * 80;
+        int D0_2 = 40 * 40;
         double[][] hFilter = new double[m][n];
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < m; x++) {
                 hFilter[x][y] = (rH - rL) * (1 - Math.exp(-c * D_2(x, y, m, n) / D0_2)) + rL;
-//                System.out.println(hFilter[x][y]);
             }
         }
 
@@ -183,7 +94,6 @@ public class HomomorphicFilter {
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
                 g[x][y] = next[x][y].times(hFilter[x][y]);
-//				System.out.println("g: "+g[x][y].getR()+"  "+g[x][y].getI());
             }
         }
 
@@ -195,12 +105,6 @@ public class HomomorphicFilter {
             }
             g[x] = ifft(temp1);
         }
-
-//		for (int x = 0; x < m; x++) {
-//			for (int y = 0; y < n; y++) {
-//				System.out.println("gifft-g: "+g[x][y].getR()+"  "+g[x][y].getI());
-//			}
-//		}
 
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < m; x++) {
@@ -217,16 +121,15 @@ public class HomomorphicFilter {
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
                 last[x][y] = Math.exp(g[x][y].getR() - 1);
-
-//				System.out.println(last[x][y]);
             }
         }
-//----------------------------------------------------------------------
-        // sixth: move the image back and cut the image 乘以(-1)^(x+y)再剪裁图像
-//		int srcpixel, srcred;
+
         int newalpha = (-1) << 24;
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
+                if ((i + j) % 2 != 0) {
+                    last[i][j] = -last[i][j];
+                }
                 newred = (int) last[i][j];
                 newblue = newred;
                 newgreen = newred << 8;
@@ -235,15 +138,12 @@ public class HomomorphicFilter {
                 destimg.setRGB(i, j, newrgb);
             }
         }
-//----------------------------------------------------------------------
         return destimg;
     }
 
     private static double D_2(int x, int y, int m, int n) {
         return (x - m / 2d) * (x - m / 2d) + (y - n / 2d) * (y - n / 2d);
     }
-
-//---------------------other functions--------------------------
 
     // 根据图像的长获得2的整数次幂
     public static int get2PowerEdge(int e) {

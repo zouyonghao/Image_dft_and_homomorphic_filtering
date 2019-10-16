@@ -26,9 +26,6 @@ public class HomomorphicFilterColor {
         Complex[][] next = new Complex[m][n];
 
         BufferedImage destimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-//----------------------------------------------------------------------
-        //  first: Image Padding and move it to center 填充图像至2的整数次幂并乘以（-1）^(x+y)
-        //  use 2-D array last to store
 
         int[][] redLevel = new int[m][n];
         int[][] greenLevel = new int[m][n];
@@ -40,8 +37,8 @@ public class HomomorphicFilterColor {
                 if (i < w && j < h) {
                     int pixel = img.getRGB(i, j);
                     int red = (pixel & 0x00ff0000) >> 16;
-                    int green = (pixel & 0x0000ff00) >> 8; // 250 = 0xfa
-                    int blue = (pixel & 0x000000ff); // 255 = 0xff
+                    int green = (pixel & 0x0000ff00) >> 8;
+                    int blue = (pixel & 0x000000ff);
 
                     alpha[i][j] = (pixel >> 24) & 0xFF;
                     redLevel[i][j] = red;
@@ -62,7 +59,7 @@ public class HomomorphicFilterColor {
         int newAlpha = (-1) << 24;
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                int pixel = (alpha[i][j] & 0xFF) << 24 | (redLevel[i][j] & 0xFF) << 16 | (greenLevel[i][j] & 0xFF) << 8 | (blueLevel[i][j] & 0xFF);
+                int pixel = newAlpha | (redLevel[i][j] & 0xFF) << 16 | (greenLevel[i][j] & 0xFF) << 8 | (blueLevel[i][j] & 0xFF);
                 destimg.setRGB(i, j, pixel);
             }
         }
@@ -77,6 +74,9 @@ public class HomomorphicFilterColor {
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 last[i][j] = Math.log(level[i][j] + 1);
+                if ((last[i][j] % 2) != 0) {
+                    last[i][j] *= -1;
+                }
             }
         }
 
@@ -108,8 +108,8 @@ public class HomomorphicFilterColor {
         // homomorphic filter
         // hom1 0.2 1.2 80*80
         // hom2
-        double rL = 1.3;
-        double rH = 1.41;
+        double rL = 0.9;
+        double rH = 1.5;
         double c = 1;
         int D0_2 = 80 * 80;
         double[][] hFilter = new double[m][n];
@@ -138,12 +138,6 @@ public class HomomorphicFilterColor {
             g[x] = ifft(temp1);
         }
 
-//		for (int x = 0; x < m; x++) {
-//			for (int y = 0; y < n; y++) {
-//				System.out.println("gifft-g: "+g[x][y].getR()+"  "+g[x][y].getI());
-//			}
-//		}
-
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < m; x++) {
                 Complex cc = g[x][y];
@@ -159,7 +153,13 @@ public class HomomorphicFilterColor {
         int[][] result = new int[m][n];
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
-                last[x][y] = Math.exp(g[x][y].getR() - 1);
+                double tmp = g[x][y].getR();
+//                System.out.println(tmp);
+                if ((x + y) % 2 != 0) {
+                    tmp *= -1;
+                }
+                last[x][y] = Math.exp(tmp - 1);
+//                System.out.println(last[x][y]);
                 result[x][y] = (int) last[x][y];
 //				System.out.println(last[x][y]);
             }
@@ -170,8 +170,6 @@ public class HomomorphicFilterColor {
     private static double D_2(int x, int y, int m, int n) {
         return (x - m / 2d) * (x - m / 2d) + (y - n / 2d) * (y - n / 2d);
     }
-
-//---------------------other functions--------------------------
 
     // 根据图像的长获得2的整数次幂
     public static int get2PowerEdge(int e) {

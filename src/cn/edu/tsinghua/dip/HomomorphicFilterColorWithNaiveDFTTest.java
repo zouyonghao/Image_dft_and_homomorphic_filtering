@@ -1,6 +1,6 @@
 package cn.edu.tsinghua.dip;
 
-import static org.junit.Assert.*;
+import org.junit.Assert;
 
 public class HomomorphicFilterColorWithNaiveDFTTest {
 
@@ -26,6 +26,7 @@ public class HomomorphicFilterColorWithNaiveDFTTest {
             for (int j = 0; j < 2; j++) {
                 iDFTResult[i][j] = HomomorphicFilterColorWithNaiveDFT.IDFT(result, i, j);
                 System.out.print(iDFTResult[i][j].getR() + "\t");
+                Assert.assertEquals(iDFTResult[i][j].getR(), test[i][j], 1e-10);
             }
             System.out.println("\n");
         }

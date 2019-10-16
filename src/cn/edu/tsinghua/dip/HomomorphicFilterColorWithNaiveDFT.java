@@ -13,15 +13,16 @@ public class HomomorphicFilterColorWithNaiveDFT {
     private static final ExecutorService THREAD_POOL_EXECUTOR = Executors.newFixedThreadPool(12);
 
     public static void main(String[] args) throws IOException {
-        String imageName = "Ex_img/hom2";
+        String imageName = "Ex_img/hom1";
         String imageFileExtension = ".png";
         BufferedImage srcimg = ImageIO.read(new File(imageName + imageFileExtension));
         BufferedImage destimg = DFT(srcimg);
         ImageIO.write(destimg, "png", new File(imageName + "_for_hfilter_naive" + imageFileExtension));
         System.out.println("finished!");
+        THREAD_POOL_EXECUTOR.shutdown();
     }
 
-    public static BufferedImage DFT(BufferedImage img) throws IOException {
+    public static BufferedImage DFT(BufferedImage img) {
 
         int m = img.getWidth(null);
         int n = img.getHeight(null);
@@ -82,7 +83,6 @@ public class HomomorphicFilterColorWithNaiveDFT {
                     next[finalU][finalV] = DFT(last, finalU, finalV);
                     latch.countDown();
                 });
-                // System.out.println("U: " + u + "---v: " + v);
             }
         }
 
@@ -99,8 +99,8 @@ public class HomomorphicFilterColorWithNaiveDFT {
         // 3. h filter
         // homomorphic filter
         // hom1 0.2 1.2 80*80
-        // hom2 1 1.5
-        double rL = 1;
+        // hom2
+        double rL = 0.5;
         double rH = 1.5;
         double c = 1;
         int D0_2 = 80 * 80;
@@ -108,7 +108,6 @@ public class HomomorphicFilterColorWithNaiveDFT {
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < m; x++) {
                 hFilter[x][y] = (rH - rL) * (1 - Math.exp(-c * D_2(x, y, m, n) / D0_2)) + rL;
-//                System.out.println(hFilter[x][y]);
             }
         }
 
@@ -116,7 +115,6 @@ public class HomomorphicFilterColorWithNaiveDFT {
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
                 g[x][y] = next[x][y].times(hFilter[x][y]);
-//				System.out.println("g: "+g[x][y].getR()+"  "+g[x][y].getI());
             }
         }
 
@@ -131,7 +129,6 @@ public class HomomorphicFilterColorWithNaiveDFT {
                     iDFTResult[finalU][finalV] = IDFT(g, finalU, finalV);
                     latch2.countDown();
                 });
-                // System.out.println("U: " + u + "---v: " + v);
             }
         }
 
@@ -151,7 +148,6 @@ public class HomomorphicFilterColorWithNaiveDFT {
             for (int y = 0; y < n; y++) {
                 last[x][y] = Math.exp(iDFTResult[x][y].getR() - 1);
                 result[x][y] = (int) last[x][y];
-//				System.out.println(last[x][y]);
             }
         }
         return result;

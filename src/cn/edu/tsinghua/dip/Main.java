@@ -8,7 +8,7 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        String imageName = "Ex_img/dft1";
+        String imageName = "Ex_img/hom2";
         String imageFileExtension = ".png";
         BufferedImage srcimg = ImageIO.read(new File(imageName + imageFileExtension));
         BufferedImage destimg = DFT(srcimg);
