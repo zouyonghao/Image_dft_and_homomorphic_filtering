@@ -161,9 +161,9 @@ public class NaiveDFT {
         for (int x = 0; x < M; x++) {
             for (int y = 0; y < N; y++) {
                 Complex temp = new Complex(0, 2 * Math.PI * (x * u_M + y * v_N));
-                c = c.plus(temp.exp().times(f[x][y])).times(MN_1);
+                c = c.plus(temp.exp().times(f[x][y]));
             }
         }
-        return c;
+        return c.times(MN_1);
     }
 }
