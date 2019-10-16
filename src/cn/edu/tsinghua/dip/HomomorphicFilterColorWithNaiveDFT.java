@@ -99,7 +99,7 @@ public class HomomorphicFilterColorWithNaiveDFT {
         // 3. h filter
         // homomorphic filter
         // hom1 0.2 1.2 80*80
-        // hom2
+        // hom2 1 1.5
         double rL = 1;
         double rH = 1.5;
         double c = 1;
