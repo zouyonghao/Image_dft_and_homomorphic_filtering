@@ -86,6 +86,7 @@ public class HomomorphicFilterColor {
         }
 
         // 2. dft
+        // 先算行
         Complex[] temp1 = new Complex[n];
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
@@ -95,7 +96,7 @@ public class HomomorphicFilterColor {
             next[x] = fft(temp1);
         }
 
-        // 再把所有的列（已经被行的一维傅里叶变换所替代）都做一维傅里叶变换
+        // 再算列
         Complex[] temp2 = new Complex[m];
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < m; x++) {
