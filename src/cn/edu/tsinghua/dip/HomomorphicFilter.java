@@ -8,19 +8,31 @@ import java.io.IOException;
 public class HomomorphicFilter {
 
     public static void main(String[] args) throws IOException {
-        String imageName = "Ex_img/ImageProcessingDemo";
+        String imageName = "Ex_img/hom2";
         String imageFileExtension = ".png";
         BufferedImage srcimg = ImageIO.read(new File(imageName + imageFileExtension));
-        BufferedImage destimg = DFT(srcimg);
-        ImageIO.write(destimg, "png", new File(imageName + "_for_hfilter" + imageFileExtension));
+        int d0 = 100;
+//        for (double rL = 0; rL < 1; rL += 0.1) {
+//            for (double rH = 0; rH < 1; rH += 0.1) {
+//                BufferedImage destimg = DFT(srcimg, rL, rH, d0);
+//                ImageIO.write(destimg, "png", new File(imageName + "_for_hfilter"
+//                        + "_" + rL + "_" + rH + "_" + d0 + imageFileExtension));
+//            }
+//        }
+        double rL = 0.2;
+        double rH = 0.5;
+        BufferedImage destimg = DFT(srcimg, rL, rH, d0);
+        ImageIO.write(destimg, "png", new File(imageName + "_for_hfilter"
+                + "_" + rL + "_" + rH + "_" + d0 + imageFileExtension));
         System.out.println("finished!");
     }
 
-    public static BufferedImage DFT(BufferedImage img) throws IOException {
+    public static BufferedImage DFT(BufferedImage img, double rL, double rH, int d0) throws IOException {
 
         int w = img.getWidth(null);
         int h = img.getHeight(null);
-        int m = get2PowerEdge(w); // 获得2的整数次幂
+        // 获得2的整数次幂
+        int m = get2PowerEdge(w);
         int n = get2PowerEdge(h);
         double[][] last = new double[m][n];
         Complex[][] next = new Complex[m][n];
@@ -39,57 +51,57 @@ public class HomomorphicFilter {
                     int gray = (red + green + blue) / 3;
 //                    int gray = red;
                     alpha[i][j] = (pixel & 0xff000000) >> 24;
-                    if ((i + j) % 2 != 0) {
-                        gray = -gray;
-                    }
                     last[i][j] = gray;
                 } else {
                     last[i][j] = 0;
                 }
                 // 1. 取 ln
                 last[i][j] = Math.log(last[i][j] + 1);
+                if ((i + j) % 2 != 0) {
+                    last[i][j] *= -1;
+                }
             }
         }
 
         // 2. dft
-        Complex[] temp1 = new Complex[n];
+        // 先算行
         for (int x = 0; x < m; x++) {
+            Complex[] temp = new Complex[n];
             for (int y = 0; y < n; y++) {
                 Complex c = new Complex(last[x][y], 0);
-                temp1[y] = c;
+                temp[y] = c;
             }
-            next[x] = fft(temp1);
+            next[x] = fft(temp);
         }
 
-        // 再把所有的列（已经被行的一维傅里叶变换所替代）都做一维傅里叶变换
-        Complex[] temp2 = new Complex[m];
+        // 再算列
         for (int y = 0; y < n; y++) {
+            Complex[] temp = new Complex[m];
             for (int x = 0; x < m; x++) {
                 Complex c = next[x][y];
-                temp2[x] = c;
+                temp[x] = c;
             }
-            temp2 = fft(temp2);
+            temp = fft(temp);
             for (int i = 0; i < m; i++) {
-                next[i][y] = temp2[i];
+                next[i][y] = temp[i];
             }
         }
 
         // 3. h filter
         // homomorphic filter
-        // hom1 0.2 1.2 80*80
+        // hom1
         // hom2
-        double rL = 0.2;
-        double rH = 2;
+//        double rL = 0.1;
+//        double rH = 0.8;
         double c = 1;
-        int D0_2 = 40 * 40;
+        double D0_2 = d0 * d0;
         double[][] hFilter = new double[m][n];
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < m; x++) {
-                hFilter[x][y] = (rH - rL) * (1 - Math.exp(-c * D_2(x, y, m, n) / D0_2)) + rL;
+                hFilter[x][y] = (rH - rL) * (1d - Math.exp(-c * D_2(x, y, m, n) / D0_2)) + rL;
             }
         }
 
-        // point-wise multiply
         Complex[][] g = new Complex[m][n];
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
@@ -99,37 +111,59 @@ public class HomomorphicFilter {
 
         // 4. DFT_-1
         for (int x = 0; x < m; x++) {
+            Complex[] temp = new Complex[m];
             for (int y = 0; y < n; y++) {
                 Complex cc = new Complex(g[x][y].getR(), g[x][y].getI());
-                temp1[y] = cc;
+                temp[y] = cc;
             }
-            g[x] = ifft(temp1);
+            g[x] = ifft(temp);
         }
 
         for (int y = 0; y < n; y++) {
+            Complex[] temp = new Complex[m];
             for (int x = 0; x < m; x++) {
                 Complex cc = g[x][y];
-                temp2[x] = cc;
+                temp[x] = cc;
             }
-            temp2 = ifft(temp2);
+            temp = ifft(temp);
             for (int i = 0; i < m; i++) {
-                g[i][y] = temp2[i];
+                g[i][y] = temp[i];
             }
         }
 
         // 5. exp
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
-                last[x][y] = Math.exp(g[x][y].getR() - 1);
+                double temp = g[x][y].getR();
+                if ((x + y) % 2 != 0) {
+                    temp *= -1;
+                }
+                last[x][y] = Math.exp(temp) - 1;
+            }
+        }
+
+        // 6. clip
+        double max = last[0][0];
+        double min = last[0][0];
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                if (last[i][j] > max)
+                    max = last[i][j];
+                if (last[i][j] < min)
+                    min = last[i][j];
+            }
+        }
+        int level = 255;
+        double range = max - min;
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                last[i][j] = (last[i][j] - min) / range * level;
             }
         }
 
         int newalpha = (-1) << 24;
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                if ((i + j) % 2 != 0) {
-                    last[i][j] = -last[i][j];
-                }
                 newred = (int) last[i][j];
                 newblue = newred;
                 newgreen = newred << 8;
@@ -142,7 +176,7 @@ public class HomomorphicFilter {
     }
 
     private static double D_2(int x, int y, int m, int n) {
-        return (x - m / 2d) * (x - m / 2d) + (y - n / 2d) * (y - n / 2d);
+        return (x - m / 2) * (x - m / 2) + (y - n / 2) * (y - n / 2);
     }
 
     // 根据图像的长获得2的整数次幂
@@ -159,18 +193,11 @@ public class HomomorphicFilter {
     }
 
     // 快速一维傅里叶变换
-    public static Complex[] fft(Complex[] x) { //传入的全都是206
+    public static Complex[] fft(Complex[] x) {
         int N = x.length;
-//		if (N == 256) {
-//			for (int i = 0; i < N; i++)
-//			System.out.println(i+"---"+x[i].getR()+"  "+x[i].getI());
-//		}
-//		System.out.println(N);
 
         // base case
         if (N == 1) {
-//			System.out.println(x[0].getR()+"  "+x[0].getI()); // !!!!ERROR
-//			return new Complex[] {x[0]};
             return x;
         }
 
@@ -200,10 +227,6 @@ public class HomomorphicFilter {
             Complex wk = new Complex(Math.cos(kth), Math.sin(kth)); // all small number not 0
             y[k] = q[k].plus(wk.times(r[k]));
             y[k + N / 2] = q[k].minus(wk.times(r[k]));
-//			System.out.println("wk: "+N+"---"+wk.getR()+"  "+wk.getI());
-//			System.out.println("q[k]: "+N+"---"+q[k].getR()+"  "+q[k].getI());
-//			System.out.println("r[k]: "+N+"---"+r[k].getR()+"  "+r[k].getI());
-//			System.out.println("wk.times(r[k]): "+N+"---"+wk.times(r[k]).getR()+"  "+wk.times(r[k]).getI());
         }
 
         return y;

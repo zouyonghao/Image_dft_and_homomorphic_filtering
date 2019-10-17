@@ -15,9 +15,9 @@ public class NaiveDFT {
     public static void main(String[] args) throws IOException {
         String imageName = args[0];
         String imageFileExtension = ".png";
-        BufferedImage srcimg = ImageIO.read(new File(imageName + imageFileExtension));
-        BufferedImage destimg = DFT(srcimg);
-        ImageIO.write(destimg, "png", new File(imageName + "_processed" + imageFileExtension));
+        BufferedImage srcImg = ImageIO.read(new File(imageName + imageFileExtension));
+        BufferedImage destImg = DFT(srcImg);
+        ImageIO.write(destImg, "png", new File(imageName + "_processed" + imageFileExtension));
         System.out.println("finished!");
         THREAD_POOL_EXECUTOR.shutdown();
     }
@@ -73,19 +73,17 @@ public class NaiveDFT {
 
     }
 
-    // 返回傅里叶频谱图
     private static BufferedImage showFourierImage(Complex[][] f) {
         int w = f.length;
         int h = f[0].length;
         double max = 0;
         double min = 0;
-        BufferedImage destimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage destImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         // 取模
         double[][] abs = new double[w][h];
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
                 abs[i][j] = f[i][j].abs();
-//				System.out.println(f[i][j].getR()+"  "+f[i][j].getI());
             }
         }
         // 取log + 1
@@ -118,21 +116,21 @@ public class NaiveDFT {
             }
         }
 
-        int newalpha = (-1) << 24;
-        int newred;
-        int newblue;
-        int newgreen;
+        int newAlpha = (-1) << 24;
+        int newRed;
+        int newBlue;
+        int newGreen;
         int newrgb;
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                newred = (int) abs[i][j] << 16;
-                newgreen = (int) abs[i][j] << 8;
-                newblue = (int) abs[i][j];
-                newrgb = newalpha | newred | newgreen | newblue;
-                destimg.setRGB(i, j, newrgb);
+                newRed = (int) abs[i][j] << 16;
+                newGreen = (int) abs[i][j] << 8;
+                newBlue = (int) abs[i][j];
+                newrgb = newAlpha | newRed | newGreen | newBlue;
+                destImg.setRGB(i, j, newrgb);
             }
         }
-        return destimg;
+        return destImg;
     }
 
     private static Complex DFT(int[][] f, int u, int v) {

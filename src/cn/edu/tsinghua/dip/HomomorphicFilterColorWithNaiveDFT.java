@@ -38,8 +38,8 @@ public class HomomorphicFilterColorWithNaiveDFT {
             for (int j = 0; j < n; j++) {
                 int pixel = img.getRGB(i, j);
                 int red = (pixel & 0x00ff0000) >> 16;
-                int green = (pixel & 0x0000ff00) >> 8; // 250 = 0xfa
-                int blue = (pixel & 0x000000ff); // 255 = 0xff
+                int green = (pixel & 0x0000ff00) >> 8;
+                int blue = (pixel & 0x000000ff);
 
                 alpha[i][j] = (pixel >> 24) & 0xFF;
                 redLevel[i][j] = red;
@@ -47,7 +47,6 @@ public class HomomorphicFilterColorWithNaiveDFT {
                 blueLevel[i][j] = blue;
             }
         }
-
         redLevel = homomorphicFilter(m, n, redLevel);
         greenLevel = homomorphicFilter(m, n, greenLevel);
         blueLevel = homomorphicFilter(m, n, blueLevel);
@@ -70,6 +69,9 @@ public class HomomorphicFilterColorWithNaiveDFT {
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 last[i][j] = Math.log(level[i][j] + 1);
+                if ((last[i][j] % 2) != 0) {
+                    last[i][j] *= -1;
+                }
             }
         }
 
@@ -98,7 +100,7 @@ public class HomomorphicFilterColorWithNaiveDFT {
 
         // 3. h filter
         // homomorphic filter
-        // hom1 0.2 1.2 80*80
+        // hom1
         // hom2
         double rL = 0.5;
         double rH = 1.5;
@@ -146,10 +148,33 @@ public class HomomorphicFilterColorWithNaiveDFT {
         int[][] result = new int[m][n];
         for (int x = 0; x < m; x++) {
             for (int y = 0; y < n; y++) {
-                last[x][y] = Math.exp(iDFTResult[x][y].getR() - 1);
-                result[x][y] = (int) last[x][y];
+                double tmp = iDFTResult[x][y].getR();
+                if ((x + y) % 2 != 0) {
+                    tmp *= -1;
+                }
+                last[x][y] = Math.exp(tmp - 1);
             }
         }
+
+        // 6. clip
+        double max = last[0][0];
+        double min = last[0][0];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (last[i][j] > max)
+                    max = last[i][j];
+                if (last[i][j] < min)
+                    min = last[i][j];
+            }
+        }
+        int LEVEL = 255;
+        double range = max - min;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                result[i][j] = (int) ((last[i][j] - min) / range * LEVEL);
+            }
+        }
+
         return result;
     }
 
