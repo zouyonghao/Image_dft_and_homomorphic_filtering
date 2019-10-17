@@ -24,7 +24,9 @@
   
 		这里有个小问题，转为灰度有不同的标准，此处直接将RGB值求平均，除此外也可以有其他方法，详见[此处](https://en.wikipedia.org/wiki/HSL_and_HSV#Lightness)。(实际上，我也进行了其他方式的实验，结果类似）
 	2. 根据DFT的公式进行计算
+		
 		![](54fbb2fb43166d22ea8ca62d4b2309f79152d294.jpg.png)
+		
 		```java
 		for (int u = 0; u < m; u++) {
 			for (int v = 0; v < n; v++) 
@@ -108,14 +110,21 @@
 
 3. 实验结果
 	* **dft1**
+	
 		![](dft1.png)![](dft1_processed.png)
+		
 	* **dft2**
+	
 		![](dft2.png)![](dft2_processed.png)
+		
 	* **dft3**
+	
 		![](dft3.png)![](dft3_processed.png)
+		
 	* **dft4**
-		![](dft4.png)
-		![](dft4_processed.png)
+	
+		![](dft4.png)![](dft4_processed.png)
+		
 ### 2. 同态滤波
 1. 实验环境
 	同上
@@ -156,7 +165,9 @@
 		```
 	4. 傅立叶逆变换
 		根据公式
+		
 		![](fd039245d688d43fb01d2f4b701ed21b0ff43bd6.jpg.png)
+		
 		可以写出逆变换函数
 		```java
 		public static Complex IDFT(Complex[][] f, int u, int v) {
@@ -205,26 +216,45 @@
 3. FFT
 	1. 原理
 		1. 首先，之前的公式可以拆成两次一维DFT分别计算，因此我们可以只对一维DFT进行优化
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.17.04.png)
+		
 		2. 假设图片长和宽都是2的幂
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.19.51.png)
+			
 			那么还可以进一步写成
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.21.03.png)
+			
 			因为
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.22.02.png)
+			
 			（左边直接带入计算约掉2就可以得右边）
 			我们可以得到
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.50.51.png)
+			
 			令
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.50.58.png)
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.51.05.png)
+			
 			得到
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.51.11.png)
+			
 			又因为
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.52.33.png)
+			
 			这里是通过欧拉公式得到的，左边带入，由于`e^(j*pi) = -1`，所以可以约掉多余部分。
 			最后我们可以得到
+			
 			![](%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202019-10-17%2012.54.40.png)
+			
 			**因此**，我们可以只计算前一半，后面一半可以直接乘一个系数。这样的话，我们就可以通过一个递归的方式，来快速计算了，时间复杂度下降到`Mlog(M)Nlog(N)`，可以非常快地计算了。
 	2. 代码
 		1. 把图片的长和宽进行扩展
@@ -319,17 +349,29 @@
 
 4. 实验结果
 * hom1
+
 	![](hom1.png)
+	
 	`rL=1.9 rH=2.9 D0=800`
+	
 	![](hom1_for_hfilter_1.9000000000000008_2.9000000000000017_800.png)
+
 * hom2
+
 	![](hom2.png)
+	
 	`rL=0.2 rH=0.5 D0=800 灰色`
+	
 	![](hom2_for_hfilter_0.2_0.5_800.png)
+	
 	`rL=0.2 rH=0.6 D0=800 彩色`
+	
 	![](hom2_for_hfilter_color_0.2_0.6_800.png)
+	
 	`rL=0.3 rH=0.5 D0=800 彩色`
+	
 	![](hom2_for_hfilter_color_0.30000000000000004_0.5_800.png)
+
 可以看到，参数调好的话滤波后结果还可以，不过调参数的过程实在是漫长～
 
 ### 3.总结
@@ -346,13 +388,17 @@
 * 吐槽
 	作业是不是有点多了…
 ### 参考
-> 书籍
-> Gonzalez, Rafael C., and Paul Wintz. "Digital image processing(Book)." Reading, Mass., Addison-Wesley Publishing Co., Inc.(Applied Mathematics and Computation 13 (1977): 451.
 
-> 相关链接
+> Gonzalez, Rafael C., and Paul Wintz. "Digital image processing(Book)." Reading, Mass., Addison-Wesley Publishing Co., Inc.(Applied Mathematics and Computation 13 (1977): 451.
+>
 > [Bilibili会飞的吴克对傅立叶变换的讲解](https://www.bilibili.com/video/av45275524)
+>
 > [数字图像处理Python语言实现-同态滤波增强与去雾处理](https://blog.csdn.net/wujuxKkoolerter/article/details/95088851)
+>
 > [Catalano-Framework 一个包含多种算法的Java库](https://github.com/DiegoCatalano/Catalano-Framework)
+>
 > [Fun with Java, Understanding the FFT Algorithm](https://www.developer.com/java/other/article.php/3457251/Fun-with-Java-Understanding-the-Fast-Fourier-Transform-FFT-Algorithm.htm)
+>
 > [图像 快速傅里叶变换 及 频率域滤波 java 实现](https://blog.csdn.net/cloudray8580/article/details/41676441)
+>
 > [java使用傅里叶变换，得到变换之后的傅里叶频谱图像 ](https://blog.csdn.net/wangjichen_1/article/details/51120194)
